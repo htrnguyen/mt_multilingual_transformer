@@ -1,9 +1,13 @@
 import os
 import re
+import sys
 import unicodedata
 import sentencepiece as spm
 import numpy as np
 from sklearn.model_selection import train_test_split
+
+# Set console output encoding to UTF-8
+sys.stdout.reconfigure(encoding='utf-8')
 
 class MultilingualPreprocessor:
     """
@@ -377,14 +381,47 @@ class MultilingualPreprocessor:
 
 # Hàm chính để chạy tiền xử lý
 def main():
-    data_dir = ''
-    output_dir = './processed'
+    import zipfile
+    import shutil
+    import pickle
     
-    # Tạo và chạy bộ tiền xử lý
-    preprocessor = MultilingualPreprocessor(data_dir, output_dir)
+    # Set up directories
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(base_dir, 'data')
+    extracted_dir = os.path.join(base_dir, 'extracted')
+    output_dir = os.path.join(base_dir, 'processed')
+    
+    # Create directories if they don't exist
+    os.makedirs(extracted_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Extract zip files if needed
+    zip_files = {
+        'fra-eng': os.path.join(data_dir, 'fra-eng.zip'),
+        'spa-eng': os.path.join(data_dir, 'spa-eng.zip'),
+        'vie-eng': os.path.join(data_dir, 'vie-eng.zip')
+    }
+    
+    for lang, zip_path in zip_files.items():
+        if os.path.exists(zip_path):
+            extract_path = os.path.join(extracted_dir, lang)
+            if not os.path.exists(extract_path):
+                print(f'Extracting {lang} data...')
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(extract_path)
+    
+    # Create and run preprocessor
+    preprocessor = MultilingualPreprocessor(base_dir, output_dir)
     all_data, sp, vocab_info = preprocessor.run_full_pipeline()
     
-    print("Đã hoàn thành tiền xử lý dữ liệu đa ngôn ngữ!")
+    # Save the preprocessed data and vocab info
+    with open(os.path.join(output_dir, 'all_data.pkl'), 'wb') as f:
+        pickle.dump(all_data, f)
+    
+    with open(os.path.join(output_dir, 'vocab_info.pkl'), 'wb') as f:
+        pickle.dump(vocab_info, f)
+    
+    print('Preprocessing completed successfully!')
 
 if __name__ == "__main__":
     main()

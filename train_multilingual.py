@@ -1,4 +1,5 @@
 import os
+import sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,6 +11,9 @@ from multilingual_transformer import create_multilingual_transformer
 from language_routing import LanguageDetector, LanguageRouter
 import sentencepiece as spm
 import pickle
+
+# Set console output encoding to UTF-8
+sys.stdout.reconfigure(encoding='utf-8')
 
 class MultilingualTrainer:
     """
@@ -406,7 +410,7 @@ def save_data_for_training(data_dir, output_dir):
             with open(output_file, 'wb') as f:
                 pickle.dump(split_data, f)
             
-            print(f"Đã lưu dữ liệu {lang_pair}_{split}: {src_data.shape}")
+            print(f"Saved data {lang_pair}_{split}: {src_data.shape}")
 
 def main():
     """
@@ -448,8 +452,8 @@ def main():
         device='cuda' if torch.cuda.is_available() else 'cpu'
     )
     
-    # Huấn luyện mô hình
-    language_pairs = [('en', 'fr'), ('en', 'es'), ('en', 'vi'), ('fr', 'en'), ('es', 'en'), ('vi', 'en')]
+    # Train the model
+    language_pairs = [('en', 'fr'), ('en', 'es'), ('en', 'vi')]
     history = trainer.train(
         language_pairs=language_pairs,
         batch_size=32,
@@ -458,7 +462,7 @@ def main():
         save_every=1
     )
     
-    print("Huấn luyện hoàn tất!")
+    print("Training completed!")
 
 if __name__ == "__main__":
     main()
